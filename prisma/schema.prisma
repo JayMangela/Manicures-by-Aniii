@@ -1,0 +1,35 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Appointment {
+  id              String   @id @default(uuid())
+  bookingRef      String   @unique
+  fullName        String
+  email           String
+  phone           String
+  instagram       String?
+  services        String   // JSON string of selected services
+  addOns          String?  // JSON string of selected add-ons
+  date            String
+  timeSlot        String
+  totalPrice      Float
+  depositPaid     Boolean  @default(false)
+  status          String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED, COMPLETED
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AdminUser {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+}

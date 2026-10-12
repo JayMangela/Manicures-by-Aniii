@@ -1,0 +1,20 @@
+[
+  {
+    "bookingRef": "ANI-136282",
+    "fullName": "Jay Mangela",
+    "email": "mangelajay2@gmail.com",
+    "phone": " 80977 40291",
+    "services": [
+      "Gel-X Full Set (Solid Colour)"
+    ],
+    "addOns": [
+      "Charms & Rhinestone Application"
+    ],
+    "date": "Fri 16 Oct",
+    "timeSlot": "03:00 PM",
+    "totalPrice": 25,
+    "id": "bk_cg3nh07",
+    "status": "CONFIRMED",
+    "createdAt": "2026-10-12T04:21:45.326Z"
+  }
+]
