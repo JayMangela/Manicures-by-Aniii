@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 export interface BookingRecord {
   id: string;
@@ -18,30 +19,89 @@ export interface BookingRecord {
   createdAt: string;
 }
 
-const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'bookings.json');
+// In Vercel serverless environments, only /tmp is writable
+const LOCAL_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'bookings.json');
+const TMP_DATA_FILE = path.join(os.tmpdir(), 'manicures_bookings.json');
 
-function ensureDataFileExists() {
-  const dir = path.dirname(DATA_FILE);
+function getDataFilePath(): string {
+  if (process.env.VERCEL) {
+    return TMP_DATA_FILE;
+  }
+  return LOCAL_DATA_FILE;
+}
+
+function ensureDataFileExists(): string {
+  const filePath = getDataFilePath();
+  const dir = path.dirname(filePath);
+
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {
+      // Fallback to tmpdir if local path is not writable
+      return TMP_DATA_FILE;
+    }
   }
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2), 'utf-8');
+
+  if (!fs.existsSync(filePath)) {
+    // If running in tmp, try to seed from bundled local data if available
+    let seedData = '[]';
+    if (filePath !== LOCAL_DATA_FILE && fs.existsSync(LOCAL_DATA_FILE)) {
+      try {
+        seedData = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
+      } catch {
+        seedData = '[]';
+      }
+    }
+
+    try {
+      fs.writeFileSync(filePath, seedData, 'utf-8');
+    } catch {
+      // If writing to local fails, write to tmp
+      if (filePath !== TMP_DATA_FILE) {
+        fs.writeFileSync(TMP_DATA_FILE, seedData, 'utf-8');
+        return TMP_DATA_FILE;
+      }
+    }
   }
+
+  return filePath;
 }
 
 export function getBookings(): BookingRecord[] {
   try {
-    ensureDataFileExists();
-    const data = fs.readFileSync(DATA_FILE, 'utf-8');
+    const filePath = ensureDataFileExists();
+    const data = fs.readFileSync(filePath, 'utf-8');
     return JSON.parse(data);
   } catch {
+    // Fallback attempt from tmp or local
+    try {
+      if (fs.existsSync(LOCAL_DATA_FILE)) {
+        return JSON.parse(fs.readFileSync(LOCAL_DATA_FILE, 'utf-8'));
+      }
+    } catch {
+      // ignore
+    }
     return [];
   }
 }
 
+function saveBookings(bookings: BookingRecord[]): void {
+  let filePath = ensureDataFileExists();
+  const json = JSON.stringify(bookings, null, 2);
+  try {
+    fs.writeFileSync(filePath, json, 'utf-8');
+  } catch (err) {
+    // If local write fails (e.g. read-only file system on Vercel), save to tmp
+    if (filePath !== TMP_DATA_FILE) {
+      fs.writeFileSync(TMP_DATA_FILE, json, 'utf-8');
+    } else {
+      throw err;
+    }
+  }
+}
+
 export function createBooking(data: Omit<BookingRecord, 'id' | 'createdAt' | 'status'>): BookingRecord {
-  ensureDataFileExists();
   const bookings = getBookings();
   
   const newBooking: BookingRecord = {
@@ -52,6 +112,36 @@ export function createBooking(data: Omit<BookingRecord, 'id' | 'createdAt' | 'st
   };
 
   bookings.unshift(newBooking);
-  fs.writeFileSync(DATA_FILE, JSON.stringify(bookings, null, 2), 'utf-8');
+  saveBookings(bookings);
   return newBooking;
+}
+
+export function updateBooking(id: string, updates: Partial<BookingRecord>): BookingRecord | null {
+  const bookings = getBookings();
+  const index = bookings.findIndex((b) => b.id === id);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const updatedBooking: BookingRecord = {
+    ...bookings[index],
+    ...updates,
+  };
+
+  bookings[index] = updatedBooking;
+  saveBookings(bookings);
+  return updatedBooking;
+}
+
+export function deleteBooking(id: string): boolean {
+  const bookings = getBookings();
+  const filtered = bookings.filter((b) => b.id !== id);
+
+  if (filtered.length === bookings.length) {
+    return false;
+  }
+
+  saveBookings(filtered);
+  return true;
 }

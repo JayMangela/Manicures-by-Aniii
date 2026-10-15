@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { getBookings, BookingRecord } from '@/lib/bookingsStore';
+import { getBookings, updateBooking, deleteBooking } from '@/lib/bookingsStore';
 import { sendAppointmentConfirmation } from '@/lib/notifications';
-
-const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'bookings.json');
 
 export async function PATCH(
   request: Request,
@@ -17,22 +13,22 @@ export async function PATCH(
     const { status, depositPaid } = body;
 
     const bookings = getBookings();
-    const index = bookings.findIndex((b) => b.id === id);
+    const existing = bookings.find((b) => b.id === id);
 
-    if (index === -1) {
+    if (!existing) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    const previousStatus = bookings[index].status;
+    const previousStatus = existing.status;
 
-    const updatedBooking: BookingRecord = {
-      ...bookings[index],
+    const updatedBooking = updateBooking(id, {
       ...(status && { status }),
       ...(depositPaid !== undefined && { depositPaid }),
-    };
+    });
 
-    bookings[index] = updatedBooking;
-    fs.writeFileSync(DATA_FILE, JSON.stringify(bookings, null, 2), 'utf-8');
+    if (!updatedBooking) {
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+    }
 
     // Automatically trigger Email and WhatsApp confirmation when status is set to CONFIRMED
     let confirmationDetails = null;
@@ -62,14 +58,12 @@ export async function DELETE(
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const bookings = getBookings();
-    const filtered = bookings.filter((b) => b.id !== id);
+    const success = deleteBooking(id);
 
-    if (bookings.length === filtered.length) {
+    if (!success) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    fs.writeFileSync(DATA_FILE, JSON.stringify(filtered, null, 2), 'utf-8');
     return NextResponse.json({ success: true, id });
   } catch (error) {
     console.error('Failed to delete booking:', error);
