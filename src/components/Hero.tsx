@@ -83,12 +83,22 @@ export function Hero() {
             </Link>
           </MagneticButton>
           
-          <Link
-            href="/#services"
-            className="inline-flex items-center justify-center px-6 py-3.5 rounded-full font-sans font-medium text-foreground/80 hover:text-accent transition-colors text-base"
+          <a
+            href="#services"
+            onClick={(e) => {
+              e.preventDefault();
+              const servicesSection = document.getElementById('services');
+              if (servicesSection) {
+                servicesSection.scrollIntoView({ behavior: 'smooth' });
+                window.history.pushState(null, '', '#services');
+              } else {
+                window.location.href = '/#services';
+              }
+            }}
+            className="inline-flex items-center justify-center px-6 py-3.5 rounded-full font-sans font-medium text-foreground/80 hover:text-accent transition-colors text-base cursor-pointer"
           >
             Explore Services
-          </Link>
+          </a>
         </motion.div>
 
       </div>

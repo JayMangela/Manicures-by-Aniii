@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 export function About() {
   return (
-    <section id="about" className="py-20 md:py-28 overflow-hidden bg-background">
+    <section id="about" className="scroll-mt-24 py-20 md:py-28 overflow-hidden bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">

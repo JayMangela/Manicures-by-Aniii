@@ -40,7 +40,7 @@ export function Pricing() {
   const [activeTab, setActiveTab] = useState(CATEGORIES[0]);
 
   return (
-    <section id="services" className="py-20 md:py-28 bg-background border-b border-accent/10">
+    <section id="services" className="scroll-mt-24 py-20 md:py-28 bg-background border-b border-accent/10">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center mb-12">

@@ -29,6 +29,18 @@ export function Navbar() {
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
+  const handleScrollTo = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    closeMobileMenu();
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      e.preventDefault();
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        window.history.pushState(null, '', `#${targetId}`);
+      }
+    }
+  };
+
   return (
     <motion.nav 
       variants={{
@@ -63,9 +75,9 @@ export function Navbar() {
 
         {/* Desktop Links */}
         <div className="hidden md:flex items-center space-x-6">
-          <Link href="/#about" className="text-foreground/80 hover:text-accent transition-colors font-sans font-medium text-sm">About</Link>
-          <Link href="/#services" className="text-foreground/80 hover:text-accent transition-colors font-sans font-medium text-sm">Services</Link>
-          <Link href="/#gallery" className="text-foreground/80 hover:text-accent transition-colors font-sans font-medium text-sm">Portfolio</Link>
+          <Link href="/#about" onClick={(e) => handleScrollTo(e, 'about')} className="text-foreground/80 hover:text-accent transition-colors font-sans font-medium text-sm">About</Link>
+          <Link href="/#services" onClick={(e) => handleScrollTo(e, 'services')} className="text-foreground/80 hover:text-accent transition-colors font-sans font-medium text-sm">Services</Link>
+          <Link href="/#gallery" onClick={(e) => handleScrollTo(e, 'gallery')} className="text-foreground/80 hover:text-accent transition-colors font-sans font-medium text-sm">Portfolio</Link>
           <Link href="/design-calculator" className="text-accent hover:text-accent-hover transition-colors font-sans font-semibold text-sm">Custom Calculator</Link>
           <Link href="/care-guide" className="text-foreground/80 hover:text-accent transition-colors font-sans font-medium text-sm">Care Guide</Link>
         </div>
@@ -124,21 +136,21 @@ export function Navbar() {
             <div className="flex flex-col space-y-4 font-sans font-medium text-base">
               <Link 
                 href="/#about" 
-                onClick={closeMobileMenu}
+                onClick={(e) => handleScrollTo(e, 'about')}
                 className="text-foreground hover:text-accent transition-colors py-1.5 border-b border-accent/10"
               >
                 About Ani
               </Link>
               <Link 
                 href="/#services" 
-                onClick={closeMobileMenu}
+                onClick={(e) => handleScrollTo(e, 'services')}
                 className="text-foreground hover:text-accent transition-colors py-1.5 border-b border-accent/10"
               >
                 Services & Pricing
               </Link>
               <Link 
                 href="/#gallery" 
-                onClick={closeMobileMenu}
+                onClick={(e) => handleScrollTo(e, 'gallery')}
                 className="text-foreground hover:text-accent transition-colors py-1.5 border-b border-accent/10"
               >
                 Portfolio & Gallery
